@@ -1,8 +1,5 @@
 package com.iskander.manager;
 
-
-
-
 import com.iskander.model.Epic;
 import com.iskander.model.Subtask;
 import com.iskander.model.Task;
@@ -52,6 +49,8 @@ public interface Manager{
 
     List<Task> getHistory();
 
+    // RED
+    // Этот метод не должен вызываться вне класса. Только изнутри, например, при создании новой задачи в менеджере
     void validateTime(Task task);
 
 }

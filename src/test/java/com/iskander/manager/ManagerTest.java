@@ -19,6 +19,8 @@ abstract class ManagerTest<T extends Manager> {
     protected Task task;
     protected Task task2;
     protected Task updTask;
+    // RED
+    // Неиспользуемые задачи лучше удалить
     protected Subtask subtask;
     protected Subtask subtask2;
     protected Subtask updSubTask;
@@ -270,6 +272,8 @@ abstract class ManagerTest<T extends Manager> {
         assertEquals(35,epic.getDuration().getSeconds()/60);
     }
 
+    // RED
+    // Было бы здорово так же проврить успешный случай создания задачи
     @Test
     void testValidateTimeWithSubtaskSameStartTime(){
         Task task = new Task(1,"Task","Something",Status.NEW,Duration.ofMinutes(10),LocalDateTime.now());

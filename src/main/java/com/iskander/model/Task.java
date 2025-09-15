@@ -24,6 +24,8 @@ public class Task {
         this.name = name;
         this.describe = describe;
         this.status = status;
+        // RED: Критично! Два поля (duration, startTime) остаются неинициализированными (null).
+        // Это приведет к NullPointerException в getEndTime().
     }
 
     public Task(long id, String name, String describe, Status status,Duration duration,LocalDateTime startTime) {
@@ -32,15 +34,17 @@ public class Task {
     }
 
 
-
+    // YELLOW: Может вернуть null.
     public LocalDateTime getStartTime() {
         return startTime;
     }
 
+    // RED: Выбросит NPE, если startTime или duration == null.
     public LocalDateTime getEndTime(){
         return startTime.plus(duration);
     }
 
+    // YELLOW: Может вернуть null.
     public Duration getDuration() {
         return duration;
     }
@@ -69,6 +73,8 @@ public class Task {
         this.describe = describe;
     }
 
+    // RED: Идентификатор не должен меняться после создания объекта.
+    // Менеджер задач рассчитывает на его неизменность.
     public void setId(long id) {
         this.id = id;
     }
@@ -77,6 +83,9 @@ public class Task {
         this.status = status;
     }
 
+    // YELLOW: В toString не выводятся поля duration и startTime,
+    // хотя они являются важной частью состояния объекта.
+    // Это усложняет отладку. + лучше использовать геттеры
     @Override
     public String toString() {
         return "Task{" +
@@ -86,6 +95,21 @@ public class Task {
                 ", status='" + status + '\'' +
                 '}';
     }
-
-
 }
+
+//    // Улучшенный конструктор
+//    public Task(String name, String describe, Status status) {
+//        this.name = name;
+//        this.describe = describe;
+//        this.status = status;
+//        this.duration = Duration.ZERO; // Значение по умолчанию
+//        this.startTime = LocalDateTime.now(); // или другое значение по умолчанию
+//    }
+//
+//    // Защищенный метод getEndTime()
+//    public LocalDateTime getEndTime() {
+//        if (startTime == null || duration == null) {
+//            return null;
+//        }
+//        return startTime.plus(duration);
+//    }

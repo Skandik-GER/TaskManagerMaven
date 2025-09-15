@@ -26,9 +26,17 @@ public class Subtask extends Task {
     public void setEpicId(long epicId) {
         this.epicId = epicId;
     }
+    // RED: Критично! Изменение epicId после создания подзадачи
+    // должно быть запрещено или как минимум сопровождаться
+    // сложной логикой обновления в менеджере (старый эпик удаляет,
+    // новый эпик добавляет). Лучше сделать поле final.
 
 
-
+    // RED: Опасная реализация equals.
+    // 1. Она несовместима с hashCode(). hashcode считается только по epicId,
+    //    а equals сравнивает по epicId, name, status, id.
+    // 2. Для сравнения примитивов (long) нужно использовать ==, а не equals.
+    // 3. Сравнение getId() написано верно (через ==), но оформлено странно.
     @Override
     public boolean equals(Object object) {
         if (this == object) return true;
@@ -38,11 +46,17 @@ public class Subtask extends Task {
                 && getStatus().equals(subtask.getStatus()) && getId() == (subtask.getId());
     }
 
+    // RED: Опасная реализация.
+    // Хеш-код считается только на основе epicId. Это значит, что все подзадачи
+    // одного эпика будут иметь одинаковый хеш-код, даже если их id, name и status разные.
+    // Это приведет к ужатной производительности в хеш-коллекциях и коллизиям.
     @Override
     public int hashCode() {
         return Objects.hashCode(getEpicId());
     }
 
+
+    // YELLOW: лучше использовать геттеры вместо прямого обращения к полям
     @Override
     public String toString() {
         return "Subtask{" +
