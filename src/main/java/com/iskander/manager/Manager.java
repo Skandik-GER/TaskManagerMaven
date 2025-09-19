@@ -26,7 +26,7 @@ public interface Manager{
 
     void removeAllEpic();
 
-    void removeEpicId(long id);
+    void removeEpicById(long id);
 
     void removeAllSubtask();
 
@@ -49,8 +49,7 @@ public interface Manager{
 
     List<Task> getHistory();
 
-    // RED
+    // RED+
     // Этот метод не должен вызываться вне класса. Только изнутри, например, при создании новой задачи в менеджере
-    void validateTime(Task task);
 
 }

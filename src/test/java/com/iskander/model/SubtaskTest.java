@@ -20,9 +20,12 @@ class SubtaskTest {
     @Test
     void shouldSetEpicIdToSubtask() {
         Epic epic = new Epic("Chill","Chilling");
-        Subtask subtask = new Subtask(1,"Drink","Drinkning Soda",1,Status.DONE, Duration.ofMinutes(50), LocalDateTime.now());
-        subtask.setEpicId(2);
+        long epicId = epic.getId();
 
-        Assertions.assertEquals(2,subtask.getEpicId());
+        Subtask subtask = new Subtask("Drink", "Drinking Soda", epicId, Status.DONE,
+                Duration.ofMinutes(50), LocalDateTime.now());
+
+        assertEquals(epicId, subtask.getEpicId());
+
     }
 }

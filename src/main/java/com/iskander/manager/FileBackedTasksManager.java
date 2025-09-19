@@ -4,21 +4,17 @@ package com.iskander.manager;
 import com.iskander.model.*;
 
 import java.io.*;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+
 
 // RED:Нарушение SRP (Single Responsibility Principle).
 // Класс FileBackedTasksManager знает слишком много: он и управляет задачами, и парсит CSV,
 // и сериализует/десериализует объекты.
-// Логику парсинга (fromString, fromStringEpic, historyFromString) действительно лучше вынести
-// в отдельный утилитарный класс.
+// Логику парсинга (fromString, fromStringEpic, historyFromString) действительно лучше вынести+
+// в отдельный утилитарный класс.+
 
 public class FileBackedTasksManager extends InMemoryTaskManager {
-    private final Parser parser = new Parser();
+    private final TaskFormatter taskFormatter = new TaskFormatter();
     private final String to;
     private final String toHist;
 
@@ -33,13 +29,13 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
         try (FileWriter fileWriter = new FileWriter(to)) {
             StringBuilder stringBuilder = new StringBuilder("type,name,description,id,status,duration,startTime\n");
             for (Epic epic : epicmap.values()) {
-                stringBuilder.append("EPIC,").append(parser.toParse(epic)).append("\n");
+                stringBuilder.append("EPIC,").append(taskFormatter.serialize(epic)).append("\n");
             }
             for (Task task : taskmap.values()) {
-                stringBuilder.append("TASK,").append(parser.toParse(task)).append("\n");
+                stringBuilder.append("TASK,").append(taskFormatter.serialize(task)).append("\n");
             }
             for (Subtask subtask : subtaskmap.values()) {
-                stringBuilder.append("SUBTASK,").append(parser.toParse(subtask)).append("\n");
+                stringBuilder.append("SUBTASK,").append(taskFormatter.serialize(subtask)).append("\n");
             }
 
             fileWriter.write(stringBuilder.toString().trim());
@@ -129,8 +125,8 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
     }
 
     @Override
-    public void removeEpicId(long id) {
-        super.removeEpicId(id);
+    public void removeEpicById(long id) {
+        super.removeEpicById(id);
         save();
     }
 
@@ -182,57 +178,7 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
         return sb.toString();
     }
 
-    private static List<Long> historyFromString(String value) {
-        if(value == null){
-            return Collections.emptyList();
-        }
-        final List<Long> history = new ArrayList<>();
-        String[] values = value.split(",");
-        for (String number : values) {
-            long num = Long.parseLong(number);
-            history.add(num);
-        }
-        return history;
 
-    }
-
-    private static Task fromString(String value) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
-        String[] parts = value.split(",");
-        String name = parts[1];
-        String describe = parts[2];
-        long id = Long.parseLong(parts[3]);
-        Status status = Status.valueOf(parts[4]);
-        // RED: Потенциальная ошибка. Парсится 5-й элемент (parts[5]) как duration,
-        // но в строке для Подзадачи parts[5] - это epicId.
-        // Видно, что методы парсинга скопированы и не адаптированы под разное количество полей.
-        Duration duration = Duration.ofMinutes(Long.parseLong(parts[5]));
-        LocalDateTime startTime = LocalDateTime.parse(parts[6],formatter);
-        return new Task(id, name, describe, status,duration,startTime);
-    }
-
-    private static Epic fromStringEpic(String value) {
-        String[] parts = value.split(",");
-        String name = parts[1];
-        String describe = parts[2];
-        return new Epic(name, describe);
-    }
-
-    private static Subtask fromStringSubtask(String value) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
-        String[] parts = value.split(",");
-        String name = parts[1];
-        String describe = parts[2];
-        long id = Long.parseLong(parts[3]);
-        Status status = Status.valueOf(parts[4]);
-        long epicId = Long.parseLong(parts[5]);
-        // RED: Ошибка! parts[5] парсится дважды.
-        // Сначала в epicId, потом в duration. Это выбросит исключение.
-        // Нужно parts[6] для duration.
-        Duration duration = Duration.ofMinutes(Long.parseLong(parts[5]));
-        LocalDateTime startTime = LocalDateTime.parse(parts[7],formatter);
-        return new Subtask(id, name, describe, epicId, status,duration,startTime);
-    }
 
     public static FileBackedTasksManager loadFromFile(String path, String newPath, String hist, String toHist) {
         FileBackedTasksManager manager = new FileBackedTasksManager(newPath, toHist);
@@ -245,15 +191,15 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
                 TaskType taskType = TaskType.valueOf(data[0].trim().toUpperCase());
                 switch (taskType) {
                     case TASK:
-                        Task task = fromString(line);
+                        Task task = TaskParserUtilits.fromString(line);
                         manager.createTask(task);
                         break;
                     case EPIC:
-                        Epic epic = fromStringEpic(line);
+                        Epic epic = TaskParserUtilits.fromStringEpic(line);
                         manager.createEpic(epic);
                         break;
                     case SUBTASK:
-                        Subtask subtask = fromStringSubtask(line);
+                        Subtask subtask = TaskParserUtilits.fromStringSubtask(line);
                         manager.createSubtask(subtask);
                         break;
                 }
@@ -268,7 +214,7 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
 
         try (BufferedReader historyReader = new BufferedReader(new FileReader(hist))) {
             String historyLine = historyReader.readLine();
-            List<Long> histIds = historyFromString(historyLine);
+            List<Long> histIds = TaskParserUtilits.historyFromString(historyLine);
             for (long id : histIds) {
                 if (manager.taskmap.containsKey(id)) {
                     manager.historyManager.add(manager.taskmap.get(id));
@@ -281,8 +227,7 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
         } catch (IOException e) {
             System.out.println("Ошибка чтения файла истории: " + e.getMessage());
         }
-        // RED: Лишний вызов? Мы только что загрузили данные и вызвали save() для каждой задачи.
-        manager.save();
+        // RED: Лишний вызов? Мы только что загрузили данные и вызвали save() для каждой задачи.+
         return manager;
     }
 }

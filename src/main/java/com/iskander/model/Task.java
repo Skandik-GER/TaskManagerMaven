@@ -13,39 +13,54 @@ public class Task {
 
 
     public Task(String name, String describe, Status status,Duration duration,LocalDateTime startTime) {
+        this(0, name, describe, status, duration, startTime);
+    }
+
+    public Task(long id, String name, String describe, Status status,Duration duration,LocalDateTime startTime) {
+        this.id = id;
         this.name = name;
         this.describe = describe;
         this.status = status;
         this.duration = duration;
         this.startTime = startTime;
     }
-
     public Task(String name, String describe, Status status) {
+        this.id = 0;
         this.name = name;
         this.describe = describe;
         this.status = status;
-        // RED: Критично! Два поля (duration, startTime) остаются неинициализированными (null).
-        // Это приведет к NullPointerException в getEndTime().
+        this.duration = Duration.ZERO;
+        this.startTime = LocalDateTime.now();
     }
+        // RED: Критично! Два поля (duration, startTime) остаются неинициализированными (null).++
+        // Это приведет к NullPointerException в getEndTime().
 
-    public Task(long id, String name, String describe, Status status,Duration duration,LocalDateTime startTime) {
-        this(name, describe, status,duration,startTime);
+
+    public void setId(long id) {
         this.id = id;
     }
 
-
-    // YELLOW: Может вернуть null.
+    // YELLOW: Может вернуть null.++
     public LocalDateTime getStartTime() {
+        if (startTime == null) {
+            throw new IllegalStateException("Start time is not set");
+        }
         return startTime;
     }
 
-    // RED: Выбросит NPE, если startTime или duration == null.
+    // RED: Выбросит NPE, если startTime или duration == null.++
     public LocalDateTime getEndTime(){
+        if (startTime == null || duration == null) {
+            return null;
+        }
         return startTime.plus(duration);
     }
 
-    // YELLOW: Может вернуть null.
+    // YELLOW: Может вернуть null.++
     public Duration getDuration() {
+        if (duration == null) {
+            throw new IllegalStateException("Duration is not set");
+        }
         return duration;
     }
 
@@ -73,26 +88,26 @@ public class Task {
         this.describe = describe;
     }
 
-    // RED: Идентификатор не должен меняться после создания объекта.
+    // RED: Идентификатор не должен меняться после создания объекта.+=
     // Менеджер задач рассчитывает на его неизменность.
-    public void setId(long id) {
-        this.id = id;
-    }
 
     public void setStatus(Status status) {
         this.status = status;
     }
 
-    // YELLOW: В toString не выводятся поля duration и startTime,
+    // YELLOW: В toString не выводятся поля duration и startTime,++
     // хотя они являются важной частью состояния объекта.
-    // Это усложняет отладку. + лучше использовать геттеры
+    // Это усложняет отладку. + лучше использовать геттеры++
     @Override
     public String toString() {
         return "Task{" +
-                "name='" + name + '\'' +
-                ", describe='" + describe + '\'' +
-                ", id=" + id +
-                ", status='" + status + '\'' +
+                "name='" + getName() + '\'' +
+                ", describe='" + getDescribe() + '\'' +
+                ", id=" + getId() +
+                ", status=" + getStatus() +
+                ", duration=" + getDuration() +
+                ", startTime=" + getStartTime() +
+                ", endTime=" + getEndTime() +
                 '}';
     }
 }

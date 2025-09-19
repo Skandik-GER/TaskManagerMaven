@@ -52,12 +52,6 @@ class TaskTest {
         Assertions.assertEquals("Chill",task.getDescribe());
     }
 
-    @Test
-    void shouldSetTaskId() {
-        Task task = new Task(1,"Digging","Mining",Status.NEW, Duration.ofMinutes(10), LocalDateTime.now());
-        task.setId(2);
-        Assertions.assertEquals(2,task.getId());
-    }
 
     @Test
     void shouldSetTaskStatus() {

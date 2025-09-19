@@ -4,9 +4,10 @@ import com.iskander.model.Epic;
 import com.iskander.model.Subtask;
 import com.iskander.model.Task;
 
+import java.time.LocalDateTime;
 import java.util.*;
-// RED: Лишний импорт
-import java.util.concurrent.TimeoutException;
+// RED: Лишний импорт+
+
 
 //GREEN: Хорошая организация кода. Четкое разделение на методы, логичные названия.
 // Использование HistoryManager для управления историей — это правильное и хорошее архитектурное решение.
@@ -26,82 +27,77 @@ public class InMemoryTaskManager implements Manager{
     // GREEN: Правильно реализован механизм генерации ID.
     protected long nextId = 1;
 
-    // YELLOW: Метод изменяет входящий объект (устанавливает ему id).
+    // YELLOW: Метод изменяет входящий объект (устанавливает ему id).++
     // Это не всегда ожидаемо. Лучше создать новый объект внутри метода или
     // проверять, что id не установлен (равен 0). Но в целом решение рабочее.
     // YELLOW: Нет проверки на повторный добавление задачи с существующим id.
-    // RED: Нет проверки на пересечение по времени (вызов validateTime) при создании задач
+    // RED: Нет проверки на пересечение по времени (вызов validateTime) при создании задач+
     @Override
     public void createTask(Task task) {
-        if(task.getId() == 0 ){
-            task.setId(nextId);
+        if(task.getId() != 0 ){
+            throw new IllegalArgumentException("Новая задача должна иметь id = 0");
         }
-        taskmap.put(task.getId(), task);
+        validateTime(task);
+        task.setId(nextId);
+        taskmap.put(nextId, task);
         nextId++;
     }
-    // RED: Нет проверки на пересечение по времени (вызов validateTime) при создании подзадачи.
+    // RED: Нет проверки на пересечение по времени (вызов validateTime) при создании подзадачи.+
     @Override
     public void createSubtask(Subtask subtask) {
-        if(subtask.getId() == 0 ){
-            subtask.setId(nextId);
+        if(subtask.getId() != 0 ){
+            throw new IllegalArgumentException("Новая Подзадача должна иметь id = 0");
         }
         long epicID = subtask.getEpicId();
         if (!epicmap.containsKey(epicID)) {
-            // RED: Заменить на исключение.
-            System.out.println("Тысяча чертей!Не найден epicID ");
-            return;
+            // RED: Заменить на исключение.+
+            throw new IllegalArgumentException("Тысяча чертей!Не найден epicID ");
         }
+        validateTime(subtask);
         Epic epic = epicmap.get(epicID);
-        subtaskmap.put(subtask.getId(), subtask);
+        subtask.setId(nextId);
+        subtaskmap.put(nextId, subtask);
         epic.addSubTask(subtask);
         nextId++;
 
     }
     @Override
     public void createEpic(Epic epic) {
-        if(epic.getId() == 0 ){
-            epic.setId(nextId);
+        if(epic.getId() != 0 ){
+            throw new IllegalArgumentException("Новая задача должна иметь id = 0");
         }
-        nextId++;
+        epic.setId(nextId);
         epicmap.put(epic.getId(), epic);
+        nextId++;
     }
 
-    //RED: Нарушение инкапсуляции. Публичные методы getTasks(), getEpics(), getSubtasks()
+    //RED: Нарушение инкапсуляции. Публичные методы getTasks(), getEpics(), getSubtasks()+
     // добавляют ВСЕ элементы в историю просмотров. Это абсолютно неверное поведение.
     // В историю должен попадать только тот объект, который запросили по отдельности (через get...ById).
     // Представьте, что вы просто выводите список всех задач, а они все разом попадают в историю,
     // затирая реальные последние просмотры.
     @Override
     public List<Task> getTasks() {
-        for(Task task: taskmap.values()){
-            historyManager.add(task);
-        }
         return new ArrayList<>(taskmap.values());
     }
 
-    //RED: Нарушение инкапсуляции. Публичные методы getTasks(), getEpics(), getSubtasks()
+    //RED: Нарушение инкапсуляции. Публичные методы getTasks(), getEpics(), getSubtasks()+
     // добавляют ВСЕ элементы в историю просмотров. Это абсолютно неверное поведение.
     // В историю должен попадать только тот объект, который запросили по отдельности (через get...ById).
     // Представьте, что вы просто выводите список всех задач, а они все разом попадают в историю,
     // затирая реальные последние просмотры.
     @Override
     public List<Epic> getEpics() {
-        for(Epic epic: epicmap.values()){
-            historyManager.add(epic);
-        }
         return new ArrayList<>(epicmap.values());
     }
 
-    //RED: Нарушение инкапсуляции. Публичные методы getTasks(), getEpics(), getSubtasks()
+    //RED: Нарушение инкапсуляции. Публичные методы getTasks(), getEpics(), getSubtasks()+
     // добавляют ВСЕ элементы в историю просмотров. Это абсолютно неверное поведение.
     // В историю должен попадать только тот объект, который запросили по отдельности (через get...ById).
     // Представьте, что вы просто выводите список всех задач, а они все разом попадают в историю,
     // затирая реальные последние просмотры.
     @Override
     public List<Subtask> getSubtasks() {
-        for(Subtask subtask : subtaskmap.values()){
-            historyManager.add(subtask);
-        }
         return new ArrayList<>(subtaskmap.values());
     }
     @Override
@@ -110,8 +106,8 @@ public class InMemoryTaskManager implements Manager{
             taskmap.remove(id);
             historyManager.remove(id);
         } else {
-            // RED: Заменить на исключение.
-            System.out.println("Такой Id не найден");
+            // RED: Заменить на исключение.+
+            throw new IllegalArgumentException("Такой Id не найден");
         }
     }
 
@@ -138,9 +134,12 @@ public class InMemoryTaskManager implements Manager{
     }
     // YELLOW: Лучше назвать метод removeEpicById
     @Override
-    public void removeEpicId(long id) {
+    public void removeEpicById(long id) {
         Epic epic = epicmap.get(id);
-        // RED: Нет проверки на то, что эпик с таким id существует (epic может быть null).
+        if (epic == null) {
+            throw new IllegalArgumentException("Эпик с ID " + id + " не найден");
+        }
+        // RED: Нет проверки на то, что эпик с таким id существует (epic может быть null).+
         Map<Long,Subtask> subtasks = epic.getSubTasks();
         for(Long subtaskId : subtasks.keySet()){
             historyManager.remove(subtaskId);
@@ -163,8 +162,15 @@ public class InMemoryTaskManager implements Manager{
     @Override
     public void removeSubtaskId(long id) {
         Subtask subtask = subtaskmap.get(id);
+        if (subtask == null) {
+            return;
+        }
+
         Epic epic = epicmap.get(subtask.getEpicId());
-        epic.removeSubtaskById(id);
+        if (epic != null) {
+            epic.removeSubtaskById(id);
+        }
+
         subtaskmap.remove(id);
         historyManager.remove(id);
 
@@ -183,21 +189,29 @@ public class InMemoryTaskManager implements Manager{
         if (taskmap.get(id) != null) {
             historyManager.add(taskmap.get(id));
         } else {
-            // RED: Заменить на исключение.
-            System.err.println("Задача с ID " + id + " не найдена");
+            // RED: Заменить на исключение.+
+            throw new IllegalArgumentException("Задача с ID " + id + " не найдена");
         }
-        // RED: Вернется null, если задачи нет. Лучше бросать исключение.
+        // RED: Вернется null, если задачи нет. Лучше бросать исключение.+
         return taskmap.get(id);
     }
     @Override
     public Subtask getSubtaskById(long id) {
-        // RED: Вернется null, если задачи нет. Лучше бросать исключение.
+        // RED: Вернется null, если задачи нет. Лучше бросать исключение.+
+        Subtask subtask = subtaskmap.get(id);
+        if (subtask == null) {
+            throw new IllegalArgumentException("Подзадача с ID " + id + " не найдена");
+        }
         historyManager.add(subtaskmap.get(id));
         return subtaskmap.get(id);
     }
     @Override
     public Epic getEpicById(long id) {
-        // RED: Вернется null, если задачи нет. Лучше бросать исключение.
+        // RED: Вернется null, если задачи нет. Лучше бросать исключение.+
+        Epic epic = epicmap.get(id);
+        if (epic == null) {
+            throw new IllegalArgumentException("Эпик с ID " + id + " не найдена");
+        }
         historyManager.add(epicmap.get(id));
         return epicmap.get(id);
     }
@@ -205,26 +219,42 @@ public class InMemoryTaskManager implements Manager{
     @Override
     public void updateTask(Task task) {
         // YELLOW: Добавление в историю при обновлении - спорное решение.
-        // RED: Нет проверки, что задача с таким id вообще существует в taskmap.
-        // RED: Нет проверки на пересечение по времени (validateTime).
-        historyManager.add(task);
+        // RED: Нет проверки, что задача с таким id вообще существует в taskmap.+
+        // RED: Нет проверки на пересечение по времени (validateTime).+
+        if (!taskmap.containsKey(task.getId())) {
+            throw new IllegalArgumentException("Задача с id " + task.getId() + " не существует");
+        }
+        validateTime(task);
         taskmap.put(task.getId(), task);
+
     }
 
     @Override
     public void updateEpic(Epic newEpic) {
-        // RED: Нет проверки, что oldEpic существует.
+        // RED: Нет проверки, что oldEpic существует.+
+        if (newEpic == null) {
+            throw new IllegalArgumentException("Epic cannot be null");
+        }
         Epic oldEpic = epicmap.get(newEpic.getId());
+        if (oldEpic == null) {
+            throw new IllegalArgumentException("Эпик с id " + newEpic.getId() + " не существует");
+        }
         Map<Long, Subtask> subtasks = oldEpic.getSubTasks();
-        newEpic.setSubTasks(subtasks); // RED: Опасное решение!
+
+        oldEpic.setName(newEpic.getName());
+        oldEpic.setDescribe(newEpic.getDescribe());
+
+        oldEpic.setSubTasks(subtasks);
+        // RED: Опасное решение!++
         // Потенциальная уязвимость в updateEpic.
         // Метод получает newEpic извне и полностью заменяет им существующий эпик.
         // Это опасный подход, так как клиентский код может передать объект с измененным состоянием.
         // Лучше обновлять только те поля старого эпика, которые должны меняться (например, название, описание),
         // но не список подзадач.
-        historyManager.add(newEpic); // YELLOW: Добавление в историю при обновлении.
-        epicmap.put(newEpic.getId(), newEpic);
+        historyManager.add(oldEpic); // YELLOW: Добавление в историю при обновлении.
+        epicmap.put(oldEpic.getId(),oldEpic);
     }
+
 
     @Override
     public void updateSubtask(Subtask subtask) {
@@ -235,23 +265,36 @@ public class InMemoryTaskManager implements Manager{
         subtaskmap.put(subtask.getId(), subtask);
     }
 
-    @Override
-    public void validateTime(Task task){
-        // RED: Алгоритм не проверяет пересечение по интервалам (время начала + продолжительность).
+    public void validateTime(Task task) {
+        // RED: Алгоритм не проверяет пересечение по интервалам (время начала + продолжительность).+
         // Нужно проверять, что новый интервал [start, start+duration] не пересекается с существующими.
-        if(task.getStartTime() == null || task.getDuration() == null){
+        if (task.getStartTime() == null || task.getDuration() == null) {
             return;
         }
-        for(Task actTask : taskmap.values()){
-            if(actTask.getStartTime().equals(task.getStartTime())){
-                // RED: Проверка только на точное совпадение времени начала.
-                throw new RuntimeException(); // YELLOW: Использование слишком общего исключения.
+
+        LocalDateTime taskStart = task.getStartTime();
+        LocalDateTime taskEnd = taskStart.plus(task.getDuration());
+        for (Task actTask : taskmap.values()) {
+            if (actTask.getStartTime() != null && actTask.getDuration() != null && !actTask.getDuration().isZero()) {
+                LocalDateTime existingStart = actTask.getStartTime();
+                LocalDateTime existingEnd = existingStart.plus(actTask.getDuration());
+
+                boolean isOverlap = !(taskEnd.isBefore(existingStart) || taskStart.isAfter(existingEnd));
+                if (isOverlap) {
+                    throw new RuntimeException();
+                }
             }
         }
 
-        for(Subtask subtask : subtaskmap.values()){
-            if(subtask.getStartTime().equals(task.getStartTime())){
-                throw new RuntimeException();
+        for (Subtask subtask : subtaskmap.values()) {
+            if (subtask.getStartTime() != null && subtask.getDuration() != null && !subtask.getDuration().isZero()) {
+                LocalDateTime existingStart = subtask.getStartTime();
+                LocalDateTime existingEnd = existingStart.plus(subtask.getDuration());
+
+                boolean isOverlap = !(taskEnd.isBefore(existingStart) || taskStart.isAfter(existingEnd));
+                if (isOverlap) {
+                    throw new RuntimeException();
+                }
             }
         }
     }

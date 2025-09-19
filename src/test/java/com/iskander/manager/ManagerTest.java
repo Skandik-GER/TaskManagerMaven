@@ -19,10 +19,8 @@ abstract class ManagerTest<T extends Manager> {
     protected Task task;
     protected Task task2;
     protected Task updTask;
-    // RED
+    // RED++
     // Неиспользуемые задачи лучше удалить
-    protected Subtask subtask;
-    protected Subtask subtask2;
     protected Subtask updSubTask;
     protected Epic epic;
     protected Epic epic2;
@@ -37,12 +35,12 @@ abstract class ManagerTest<T extends Manager> {
         epic2 = new Epic("Work", "Working");
 
 
-        task = new Task(1, "Loot", "Looting", Status.IN_PROCESS, Duration.ofMinutes(10), LocalDateTime.now());
-        task2 = new Task(2, "Camp", "Camping", Status.NEW, Duration.ofMinutes(20), LocalDateTime.now());
+        task = new Task( 0,"Loot", "Looting", Status.IN_PROCESS, Duration.ofMinutes(10), LocalDateTime.now());
+        task2 = new Task( "Camp", "Camping", Status.NEW, Duration.ofMinutes(20), LocalDateTime.now());
 
 
-        updTask = new Task(1, "Not Loot", "Chilling", Status.NEW, Duration.ofMinutes(50), LocalDateTime.now());
-        updSubTask = new Subtask(3, "Eat", "Eating", epic.getId(), Status.NEW, Duration.ofMinutes(10), LocalDateTime.now());
+        updTask = new Task( "Not Loot", "Chilling", Status.NEW, Duration.ofMinutes(50), LocalDateTime.now());
+        updSubTask = new Subtask( "Eat", "Eating", epic.getId(), Status.NEW, Duration.ofMinutes(10), LocalDateTime.now());
         updEpic = new Epic("Watch Tv", "Watching");
 
 
@@ -116,7 +114,8 @@ abstract class ManagerTest<T extends Manager> {
     @Test
     void shouldRemoveAllTasks() {
         taskManager.createTask(task);
-        taskManager.createTask(task2);
+        Task task3 = new Task( "Camp", "Camping", Status.NEW, Duration.ofMinutes(20), LocalDateTime.now().plusHours(1));
+        taskManager.createTask(task3);
         assertNotNull(taskManager);
         taskManager.removeAllTasks();
         assertEquals(0, taskManager.getTasks().size());
@@ -131,13 +130,13 @@ abstract class ManagerTest<T extends Manager> {
     }
 
     @Test
-    void removeEpicId() {
+    void removeEpicById() {
         taskManager.createEpic(epic);
         taskManager.createEpic(epic2);
         assertNotNull(taskManager);
-        taskManager.removeEpicId(1);
+        taskManager.removeEpicById(epic.getId());
         assertEquals(1, taskManager.getEpics().size());
-        taskManager.removeEpicId(2);
+        taskManager.removeEpicById(2);
         assertEquals(0, taskManager.getEpics().size());
     }
 
@@ -145,12 +144,12 @@ abstract class ManagerTest<T extends Manager> {
     void removeAllSubtask() {
         taskManager.createEpic(epic);
         Subtask subtask = new Subtask("SIt", "Siting", epic.getId(), Status.DONE, Duration.ofMinutes(40), LocalDateTime.now());
-        Subtask subtask2 = new Subtask("Eat", "Eating", epic.getId(), Status.NEW, Duration.ofMinutes(70), LocalDateTime.now());
+        Subtask subtask2 = new Subtask("Eat", "Eating", epic.getId(), Status.NEW, Duration.ofMinutes(70), LocalDateTime.now().plusHours(1));
         taskManager.createSubtask(subtask);
         taskManager.createSubtask(subtask2);
         epic.addSubTask(subtask);
         epic.addSubTask(subtask2);
-        assertEquals(110,epic.getDuration().getSeconds()/60);
+        assertEquals(130,epic.getDuration().getSeconds()/60);
         assertEquals(2, epic.getSubTasks().size());
         taskManager.removeAllSubtask();
         epic.removeSubtasksAll();
@@ -162,7 +161,7 @@ abstract class ManagerTest<T extends Manager> {
     void removeSubtaskId() {
         taskManager.createEpic(epic);
         Subtask subtask1 = new Subtask("Eat", "Eating", epic.getId(), Status.NEW, Duration.ofMinutes(70), LocalDateTime.now());
-        Subtask subtask2 = new Subtask("SIt", "Siting", epic.getId(), Status.DONE, Duration.ofMinutes(40), LocalDateTime.now());
+        Subtask subtask2 = new Subtask("SIt", "Siting", epic.getId(), Status.DONE, Duration.ofMinutes(70), LocalDateTime.now().plusHours(2));
 
         taskManager.createSubtask(subtask1);
         taskManager.createSubtask(subtask2);
@@ -177,7 +176,7 @@ abstract class ManagerTest<T extends Manager> {
     void getSubtasksByEpic() {
         taskManager.createEpic(epic);
         Subtask subtask1 = new Subtask("Eat", "Eating", epic.getId(), Status.NEW, Duration.ofMinutes(30), LocalDateTime.now());
-        Subtask subtask2 = new Subtask("SIt", "Siting", epic.getId(), Status.DONE, Duration.ofMinutes(60), LocalDateTime.now());
+        Subtask subtask2 = new Subtask("Sit", "Siting", epic.getId(), Status.DONE, Duration.ofMinutes(60), LocalDateTime.now().plusHours(3));
         taskManager.createSubtask(subtask1);
         taskManager.createSubtask(subtask2);
         List<Subtask> subtasks = taskManager.getSubtasksByEpic(epic.getId());
@@ -211,21 +210,22 @@ abstract class ManagerTest<T extends Manager> {
 
     @Test
     void updateTask() {
-        taskManager.createTask(task);
-        taskManager.createTask(task2);
-        assertEquals("Loot", taskManager.getTaskById(1).getName());
-        taskManager.updateTask(updTask);
-        assertEquals("Not Loot", taskManager.getTaskById(1).getName());
+        Task task3 = new Task( "Camp", "Camping", Status.NEW, Duration.ofMinutes(20), LocalDateTime.now().plusHours(1));
+        taskManager.createTask(task3);
+        Task updTask1 = new Task(task3.getId(),"Not Loot", "Chilling", Status.NEW, Duration.ofMinutes(50), LocalDateTime.now());
+        taskManager.updateTask(updTask1);
+        assertEquals("Not Loot", taskManager.getTaskById(task3.getId()).getName());
     }
 
     @Test
     void updateEpic() {
         taskManager.createEpic(epic);
-        assertEquals("Chill", taskManager.getEpicById(1).getName());
+        assertEquals("Chill", taskManager.getEpicById(epic.getId()).getName());
         taskManager.createEpic(updEpic);
-        updEpic.setId(epic.getId());
-        taskManager.updateEpic(updEpic);
-        assertEquals("Watch Tv", taskManager.getEpicById(1).getName());
+        epic.setName(updEpic.getName());
+        updEpic.setDescribe(updEpic.getDescribe());
+        taskManager.updateEpic(epic);
+        assertEquals("Watch Tv", taskManager.getEpicById(epic.getId()).getName());
     }
 
     @Test
@@ -269,29 +269,27 @@ abstract class ManagerTest<T extends Manager> {
         epic.addSubTask(subtask2);
 
         Assertions.assertEquals(Status.IN_PROCESS,epic.getStatus());
-        assertEquals(35,epic.getDuration().getSeconds()/60);
+        assertEquals(25,epic.getDuration().getSeconds()/60);
     }
 
     // RED
     // Было бы здорово так же проврить успешный случай создания задачи
     @Test
     void testValidateTimeWithSubtaskSameStartTime(){
-        Task task = new Task(1,"Task","Something",Status.NEW,Duration.ofMinutes(10),LocalDateTime.now());
+        Task task = new Task("Task","Something",Status.NEW,Duration.ofMinutes(10),LocalDateTime.now());
         taskManager.createTask(task);
         Epic epic = new Epic("Morning","Routine");
         taskManager.createEpic(epic);
-        Subtask subtask = new Subtask(1,"Wake up","Standing up",epic.getId(),Status.DONE, Duration.ofMinutes(10), LocalDateTime.now());
-        taskManager.createSubtask(subtask);
-        assertThrows(RuntimeException.class,() -> taskManager.validateTime(task));
+        Subtask subtask = new Subtask("Wake up","Standing up",epic.getId(),Status.DONE, Duration.ofMinutes(10), LocalDateTime.now());
+        assertThrows(RuntimeException.class,() -> taskManager.createTask(subtask));
     }
 
     @Test
     void testValidateTimeWithSameTimeShouldThrowException(){
-        Task task = new Task(1,"Task","Something",Status.NEW,Duration.ofMinutes(10),LocalDateTime.now());
+        Task task = new Task("Task","Something",Status.NEW,Duration.ofMinutes(10),LocalDateTime.now());
         taskManager.createTask(task);
-        Task task1 = new Task(1,"Potato","Digging",Status.NEW,Duration.ofMinutes(10),LocalDateTime.now());
-        taskManager.createTask(task1);
-        assertThrows(RuntimeException.class,() -> taskManager.validateTime(task1));
+        Task task1 = new Task("Potato","Digging",Status.NEW,Duration.ofMinutes(10),LocalDateTime.now());
+        assertThrows(RuntimeException.class, () -> taskManager.createTask(task1));
     }
 
 }

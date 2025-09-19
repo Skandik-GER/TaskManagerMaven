@@ -45,12 +45,12 @@ class FileBackedTasksManagerTest extends ManagerTest<FileBackedTasksManager> {
         testHist2 = "src/test/resources/manager1/newHist.csv";
         taskManager = (FileBackedTasksManager) Managers.getFileBackTasksManager();
 
-        task = new Task(1, "Work", "Working", Status.NEW, Duration.ofMinutes(10), LocalDateTime.now());
-        task2 = new Task(2, "Smoke", "Smoking", Status.IN_PROCESS,Duration.ofMinutes(20), LocalDateTime.now());
+        task = new Task( "Work", "Working", Status.NEW, Duration.ofMinutes(10), LocalDateTime.now());
+        task2 = new Task( "Smoke", "Smoking", Status.IN_PROCESS,Duration.ofMinutes(20), LocalDateTime.now());
 
         epic = new Epic("Work", "Work Routine");
 
-        subtask = new Subtask(3, "Take Call", "Speaking", epic.getId(), Status.NEW,Duration.ofMinutes(10),
+        subtask = new Subtask( "Take Call", "Speaking", epic.getId(), Status.NEW,Duration.ofMinutes(10),
                 LocalDateTime.now());
     }
     @AfterEach
@@ -107,10 +107,12 @@ class FileBackedTasksManagerTest extends ManagerTest<FileBackedTasksManager> {
     @Test
     void shouldSaveTasksFromFile() {
         taskManager.createEpic(epic);
-        taskManager.createTask(task);
-        taskManager.createTask(task2);
-        Subtask subtask1 = new Subtask(3, "Take Call", "Speaking", epic.getId(), Status.NEW,Duration.ofMinutes(10),
-                LocalDateTime.now());
+        Task actTask = new Task( "Work", "Working", Status.NEW, Duration.ofMinutes(10), LocalDateTime.now().plusHours(1));
+        Task actTask2 = new Task( "Smoke", "Smoking", Status.IN_PROCESS,Duration.ofMinutes(20), LocalDateTime.now());
+        taskManager.createTask(actTask);
+        taskManager.createTask(actTask2);
+        Subtask subtask1 = new Subtask("Take Call", "Speaking", epic.getId(), Status.NEW,Duration.ofMinutes(10),
+                LocalDateTime.now().plusHours(2));
         taskManager.createSubtask(subtask1);
         taskManager.save();
 

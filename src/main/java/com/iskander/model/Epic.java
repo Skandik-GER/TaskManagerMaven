@@ -2,10 +2,10 @@ package com.iskander.model;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-// RED: Лишний импорт
-import java.util.Objects;
+
 
 
 public class Epic extends Task {
@@ -25,41 +25,54 @@ public class Epic extends Task {
         if (subTasks.isEmpty()) {
             return Duration.ZERO;
         }
-
-        Duration totalDuration = Duration.ZERO;
+        LocalDateTime start = null;
+        LocalDateTime end = null;
 
         for (Subtask subtask : subTasks.values()) {
-            LocalDateTime start = subtask.getStartTime();
-            LocalDateTime end = subtask.getEndTime();
-            // RED: Критичная ошибка в логике!
+            // RED: Критичная ошибка в логике!+
             // Суммируется продолжительность ВСЕХ подзадач подряд,
             // без учета их пересечений во времени.
             // Это не "duration эпика", а "суммарное время работы всех подзадач".
             // Длительность эпика - это разница между самым ранним началом
             // и самым поздним окончанием среди всех подзадач.
-            if (start != null && end != null) {
-                totalDuration = totalDuration.plus(Duration.between(start, end));
+            if (subtask.getStartTime() != null && subtask.getEndTime() != null) {
+                if (start == null || subtask.getStartTime().isBefore(start)) {
+                    start = subtask.getStartTime();
+                }
+                if (end == null || subtask.getEndTime().isAfter(end)) {
+                    end = subtask.getEndTime();
+                }
             }
         }
 
-        return totalDuration;
+        return  Duration.between(start, end);
     }
-    // YELLOW: Также стоит переопределить getStartTime() и getEndTime().
+    // YELLOW: Также стоит переопределить getStartTime() и getEndTime().+
 
+
+    @Override
+    public LocalDateTime getStartTime() {
+        return super.getStartTime();
+    }
+
+    @Override
+    public LocalDateTime getEndTime() {
+        return super.getEndTime();
+    }
 
     public void setSubTasks(Map<Long, Subtask> subTasks) {
-        // YELLOW: Опасно. Лучше принимать коллекцию и копировать:
-        // this.subTasks = new HashMap<>(subTasks);
-        this.subTasks = subTasks;
+        // YELLOW: Опасно. Лучше принимать коллекцию и копировать:+
+        // this.subTasks = new HashMap<>(subTasks);+
+        this.subTasks = new HashMap<>(subTasks);
         updateStatus();
     }
 
     public Map<Long, Subtask> getSubTasks() {
-        // YELLOW: Нарушение инкапсуляции.
+        // YELLOW: Нарушение инкапсуляции.+
         // Возвращается mutable-коллекция, внешний код может её изменить.
         // Лучше вернуть Collections.unmodifiableMap(subTasks)
         // или новый HashMap<>(subTasks).
-        return subTasks;
+        return Collections.unmodifiableMap(subTasks);
     }
 
 
@@ -83,10 +96,10 @@ public class Epic extends Task {
     @Override
     public String toString() {
         return "Epic{" +
-                "id=" + id +
-                ", status='" + status + '\'' +
-                ", describe='" + describe + '\'' +
-                ", name='" + name + '\'' +
+                "id=" + getId() +
+                ", status='" + getStatus() + '\'' +
+                ", describe='" + getDescribe() + '\'' +
+                ", name='" + getName() + '\'' +
                 ", subTasksSize=" + subTasks.size() +
                 '}';
     }
