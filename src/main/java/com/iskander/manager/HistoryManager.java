@@ -1,7 +1,5 @@
 package com.iskander.manager;
 
-
-
 import com.iskander.model.Task;
 
 import java.util.List;

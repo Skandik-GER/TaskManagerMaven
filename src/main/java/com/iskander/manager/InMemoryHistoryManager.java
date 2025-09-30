@@ -41,13 +41,6 @@ public class InMemoryHistoryManager implements HistoryManager {
         }
 
         public void removeNode(Node<T> node) {
-            // YELLOW: Спорно. Может быть лучше бросать исключение (NPE),+
-            // но молчаливое игнорирование тоже имеет право на жизнь как защита от дурака.
-            // RED: Критичный баг! В блоке `if (size == 1)` есть серьезная ошибка логики.+
-            // Если в списке один элемент, но переданный узел `node` ему НЕ равен,
-            // метод просто ничего не делает и завершается, хотя должен был либо сломаться,
-            // либо проигнорировать запрос. Узел, не принадлежащий списку, не должен обрабатываться молча.
-            // Это может маскировать более серьезные ошибки в коде.
             if (node == null) {
                 throw new IllegalArgumentException("Node cannot be null");
             }
@@ -114,8 +107,6 @@ public class InMemoryHistoryManager implements HistoryManager {
 
     @Override
     public void add(Task task) {
-        // YELLOW: Нет проверки на null. Передача null задачи вызовет NPE на следующей строке.+
-        // YELLOW: Имя переменной 'Node' с большой буквы+
         if(task == null){
             throw new IllegalArgumentException("Задача не может быть пуста");
         }
@@ -131,8 +122,6 @@ public class InMemoryHistoryManager implements HistoryManager {
     @Override
     public void remove(long id) {
         Node<Task> node = tasksHistory.get(id);
-        // YELLOW: Если узла с таким id нет в мапе, `node` будет null.+
-        // Метод `removeNode` его проигнорирует. В целом поведение корректное.+
         if (node != null) {
             tasks.removeNode(node);
             tasksHistory.remove(id);
@@ -143,13 +132,4 @@ public class InMemoryHistoryManager implements HistoryManager {
     public List<Task> getHistory() {
         return tasks.getTasks();
     }
-
-    // YELLOW: Реализация equals и hashCode есть, и это хорошо.++
-    // Однако, они основаны на сравнении полей `tasksHistory` и `tasks`.
-    // Для `tasks` (CustomLinkedList) методы equals и hashCode не переопределены,
-    // поэтому будут использоваться унаследованные от Object (сравнение по ссылкам).
-    // Скорее всего, это не то поведение, которое ожидается.
-    // Нужно либо переопределить equals/hashCode в CustomLinkedList (сравнивая содержимое),
-    // либо пересмотреть необходимость этих методов в целом для данного класса.++
-
 }

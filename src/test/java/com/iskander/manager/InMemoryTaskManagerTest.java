@@ -2,8 +2,6 @@ package com.iskander.manager;
 
 import org.junit.jupiter.api.BeforeEach;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class InMemoryTaskManagerTest extends ManagerTest<InMemoryTaskManager>{
     @BeforeEach
     public void initData(){

@@ -6,13 +6,6 @@ import com.iskander.model.*;
 import java.io.*;
 import java.util.List;
 
-
-// RED:Нарушение SRP (Single Responsibility Principle).
-// Класс FileBackedTasksManager знает слишком много: он и управляет задачами, и парсит CSV,
-// и сериализует/десериализует объекты.
-// Логику парсинга (fromString, fromStringEpic, historyFromString) действительно лучше вынести+
-// в отдельный утилитарный класс.+
-
 public class FileBackedTasksManager extends InMemoryTaskManager {
     private final TaskFormatter taskFormatter = new TaskFormatter();
     private final String to;
@@ -227,7 +220,6 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
         } catch (IOException e) {
             System.out.println("Ошибка чтения файла истории: " + e.getMessage());
         }
-        // RED: Лишний вызов? Мы только что загрузили данные и вызвали save() для каждой задачи.+
         return manager;
     }
 }
