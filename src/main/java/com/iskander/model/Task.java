@@ -32,6 +32,8 @@ public class Task {
         this.duration = Duration.ZERO;
         this.startTime = LocalDateTime.now();
     }
+
+
         // RED: Критично! Два поля (duration, startTime) остаются неинициализированными (null).++
         // Это приведет к NullPointerException в getEndTime().
 
