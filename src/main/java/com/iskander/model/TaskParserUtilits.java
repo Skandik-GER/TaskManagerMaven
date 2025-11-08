@@ -53,9 +53,6 @@ public class TaskParserUtilits {
         long id = Long.parseLong(parts[3]);
         Status status = Status.valueOf(parts[4]);
         long epicId = Long.parseLong(parts[5]);
-        // RED: Ошибка! parts[5] парсится дважды.+++
-        // Сначала в epicId, потом в duration. Это выбросит исключение.
-        // Нужно parts[6] для duration.
         Duration duration = Duration.ofMinutes(Long.parseLong(parts[6]));
         LocalDateTime startTime = LocalDateTime.parse(parts[7],formatter);
         return new Subtask(id, name, describe, epicId, status,duration,startTime);

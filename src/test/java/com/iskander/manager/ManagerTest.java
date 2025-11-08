@@ -19,8 +19,6 @@ abstract class ManagerTest<T extends Manager> {
     protected Task task;
     protected Task task2;
     protected Task updTask;
-    // RED++
-    // Неиспользуемые задачи лучше удалить
     protected Subtask updSubTask;
     protected Epic epic;
     protected Epic epic2;

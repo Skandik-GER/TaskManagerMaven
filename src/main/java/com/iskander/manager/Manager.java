@@ -48,8 +48,4 @@ public interface Manager{
     void updateSubtask(Subtask subtask);
 
     List<Task> getHistory();
-
-    // RED+
-    // Этот метод не должен вызываться вне класса. Только изнутри, например, при создании новой задачи в менеджере
-
 }
