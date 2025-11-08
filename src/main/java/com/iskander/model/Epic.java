@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class Epic extends Task {
 
-    private  Map<Long, Subtask> subTasks = new HashMap<>();
+    final private  Map<Long, Subtask> subTasks = new HashMap<>();
 
     public Epic(String name, String describe) {
         super(name, describe, Status.NEW);
@@ -50,10 +50,7 @@ public class Epic extends Task {
         return super.getEndTime();
     }
 
-    public void setSubTasks(Map<Long, Subtask> subTasks) {
-        this.subTasks = new HashMap<>(subTasks);
-        updateStatus();
-    }
+
 
     public Map<Long, Subtask> getSubTasks() {
         return Collections.unmodifiableMap(subTasks);

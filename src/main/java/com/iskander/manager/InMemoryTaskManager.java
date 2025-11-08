@@ -204,7 +204,7 @@ public class InMemoryTaskManager implements Manager{
         oldEpic.setName(newEpic.getName());
         oldEpic.setDescribe(newEpic.getDescribe());
 
-        oldEpic.setSubTasks(subtasks);
+
         historyManager.add(oldEpic);
         epicmap.put(oldEpic.getId(),oldEpic);
     }

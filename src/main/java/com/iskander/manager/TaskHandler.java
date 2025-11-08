@@ -54,18 +54,42 @@ public class TaskHandler implements HttpHandler {
 
     private void handleGet(HttpExchange exchange) throws IOException {
         String response = null;
-        switch (tasktype) {
-            case TASK :
-                response = TaskGson.GSON.toJson(manager.getTasks());
-                break;
-            case EPIC:
-                response = TaskGson.GSON.toJson(manager.getEpics());
-                break;
-            case SUBTASK:
-                response = TaskGson.GSON.toJson(manager.getSubtasks());
-                break;
-            default :
-                throw new IllegalStateException("Unexpected value: " + tasktype);
+        URI uri = exchange.getRequestURI();
+        String request = uri.getQuery();
+        if (request != null && request.startsWith("id=")){
+            try{
+                int id = Integer.parseInt(request.substring(3));
+                switch (tasktype){
+                    case TASK:
+                        response = TaskGson.GSON.toJson(manager.getTaskById(id));
+                        break;
+                    case EPIC:
+                        response = TaskGson.GSON.toJson(manager.getEpicById(id));
+                        break;
+                    case SUBTASK:
+                        response = TaskGson.GSON.toJson(manager.getSubtaskById(id));
+                        break;
+                    default:
+                        throw new IllegalStateException("Unexpected value: " + tasktype);
+                }
+            } catch (NumberFormatException e){
+                writeResponse(exchange,"ID ERROR",400);
+                return;
+            }
+        }else {
+            switch (tasktype) {
+                case TASK:
+                    response = TaskGson.GSON.toJson(manager.getTasks());
+                    break;
+                case EPIC:
+                    response = TaskGson.GSON.toJson(manager.getEpics());
+                    break;
+                case SUBTASK:
+                    response = TaskGson.GSON.toJson(manager.getSubtasks());
+                    break;
+                default:
+                    throw new IllegalStateException("Unexpected value: " + tasktype);
+            }
         }
         writeResponse(exchange, response, 200);
     }
@@ -100,7 +124,7 @@ public class TaskHandler implements HttpHandler {
                     case EPIC -> manager.createEpic((Epic) task);
                     case SUBTASK -> manager.createSubtask((Subtask) task);
                 }
-                writeResponse(exchange, "id" + task.getId(), 201);
+                writeResponse(exchange, "id: " + task.getId(), 201);
             }
         } catch (Exception e) {
             System.err.println("Error in handlePost: " + e.getMessage());
