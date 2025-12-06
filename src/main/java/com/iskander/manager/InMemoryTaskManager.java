@@ -1,5 +1,6 @@
 package com.iskander.manager;
 
+import com.iskander.exception.OverloopTimeException;
 import com.iskander.model.Epic;
 import com.iskander.model.Subtask;
 import com.iskander.model.Task;
@@ -11,11 +12,21 @@ public class InMemoryTaskManager implements Manager{
 
     protected final HistoryManager historyManager = Managers.getDefaultHistory();
 
-    protected final Map<Long, Task> taskmap = new HashMap<>();
-    protected final Map<Long, Subtask> subtaskmap = new HashMap<>();
-    protected final Map<Long, Epic> epicmap = new HashMap<>();
+    protected final Map<Long, Task> taskmap;
+    protected final Map<Long, Subtask> subtaskmap ;
+    protected final Map<Long, Epic> epicmap;
+
+    final protected Set<Task> prioritizedTasks;
 
     protected long nextId = 1;
+
+    public InMemoryTaskManager() {
+        taskmap = new HashMap<>();
+        subtaskmap = new HashMap<>();
+        epicmap =new HashMap<>();
+
+        prioritizedTasks = new TreeSet<>(Comparator.comparing(Task::getStartTime));
+    }
 
     @Override
     public void createTask(Task task) {
@@ -235,7 +246,7 @@ public class InMemoryTaskManager implements Manager{
 
                 boolean isOverlap = !(taskEnd.isBefore(existingStart) || taskStart.isAfter(existingEnd));
                 if (isOverlap) {
-                    throw new RuntimeException();
+                    throw new OverloopTimeException();
                 }
             }
         }
@@ -250,6 +261,11 @@ public class InMemoryTaskManager implements Manager{
                     throw new RuntimeException();
                 }
             }
+        }
+    }
+    protected void updateId(long id) {
+        if (nextId <= id) {
+            nextId = id + 1;
         }
     }
     @Override

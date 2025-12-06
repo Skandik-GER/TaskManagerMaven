@@ -11,7 +11,6 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) throws IOException {
         HttpTaskServer httpTaskServer = new HttpTaskServer();
-        httpTaskServer.manager.createTask(new Task("Work","working", Status.NEW));
         httpTaskServer.start();
 
     }

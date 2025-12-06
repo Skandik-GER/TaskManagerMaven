@@ -10,14 +10,15 @@ import java.util.Map;
 
 public class Epic extends Task {
 
-    final private  Map<Long, Subtask> subTasks = new HashMap<>();
+    private  Map<Long, Subtask> subTasks;
 
     public Epic(String name, String describe) {
         super(name, describe, Status.NEW);
+        subTasks = new HashMap<>();
     }
 
 
-    @Override
+
     public Duration getDuration() {
         if (subTasks.isEmpty()) {
             return Duration.ZERO;
@@ -40,17 +41,22 @@ public class Epic extends Task {
         return  Duration.between(start, end);
     }
 
-    @Override
+
     public LocalDateTime getStartTime() {
-        return super.getStartTime();
+        return startTime;
     }
 
-    @Override
+
     public LocalDateTime getEndTime() {
-        return super.getEndTime();
+        if (startTime == null || duration == null) {
+            return null;
+        }
+        return startTime.plus(duration);
     }
 
-
+    public void setSubTasks(Map<Long, Subtask> subTasks) {
+        this.subTasks = subTasks != null ? subTasks : new HashMap<>();
+    }
 
     public Map<Long, Subtask> getSubTasks() {
         return Collections.unmodifiableMap(subTasks);

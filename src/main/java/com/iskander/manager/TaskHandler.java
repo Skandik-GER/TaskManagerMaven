@@ -1,6 +1,8 @@
 package com.iskander.manager;
 
 import com.google.gson.Gson;
+import com.iskander.exception.EpicIdException;
+import com.iskander.exception.OverloopTimeException;
 import com.iskander.model.Epic;
 import com.iskander.model.Subtask;
 import com.iskander.model.Task;
@@ -14,8 +16,6 @@ import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
-
-
 
 
 public class TaskHandler implements HttpHandler {
@@ -47,8 +47,8 @@ public class TaskHandler implements HttpHandler {
                 default:
                     writeResponse(exchange, "Метод не найден", 405);
             }
-        } catch (Exception e) {
-            writeResponse(exchange, "Ошибка сервера", 500);
+        } catch (Throwable e) {
+            writeResponse(exchange, e.getMessage(), 500);
         }
     }
 
@@ -56,10 +56,10 @@ public class TaskHandler implements HttpHandler {
         String response = null;
         URI uri = exchange.getRequestURI();
         String request = uri.getQuery();
-        if (request != null && request.startsWith("id=")){
-            try{
+        if (request != null && request.startsWith("id=")) {
+            try {
                 int id = Integer.parseInt(request.substring(3));
-                switch (tasktype){
+                switch (tasktype) {
                     case TASK:
                         response = TaskGson.GSON.toJson(manager.getTaskById(id));
                         break;
@@ -72,11 +72,11 @@ public class TaskHandler implements HttpHandler {
                     default:
                         throw new IllegalStateException("Unexpected value: " + tasktype);
                 }
-            } catch (NumberFormatException e){
-                writeResponse(exchange,"ID ERROR",400);
+            } catch (NumberFormatException e) {
+                writeResponse(exchange, "ID ERROR", 400);
                 return;
             }
-        }else {
+        } else {
             switch (tasktype) {
                 case TASK:
                     response = TaskGson.GSON.toJson(manager.getTasks());
@@ -126,10 +126,13 @@ public class TaskHandler implements HttpHandler {
                 }
                 writeResponse(exchange, "id: " + task.getId(), 201);
             }
-        } catch (Exception e) {
-            System.err.println("Error in handlePost: " + e.getMessage());
+        }catch (OverloopTimeException e){
+            System.err.println(e.getMessage());
+            writeResponse(exchange,"Задачи не должны перескаться по времени!",400);
+        }catch (EpicIdException e){
+            System.err.println(e.getMessage());
+            writeResponse(exchange,"Такого EpicId не существует",400);
         }
-
     }
 
     private void handleDelete(HttpExchange exchange) throws IOException {
